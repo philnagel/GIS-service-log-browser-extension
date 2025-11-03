@@ -83,6 +83,16 @@ async function getServicesForTab(tabId) {
   return result[key] || {};
 }
 
+// Helper to get icon paths for a given state (default or active)
+function getIconPaths(state) {
+  return {
+    "16": `icon-${state}-16.png`,
+    "32": `icon-${state}-32.png`,
+    "48": `icon-${state}-48.png`,
+    "128": `icon-${state}-128.png`
+  };
+}
+
 // Helper to save services for a tab to storage
 async function saveServicesForTab(tabId, services) {
   const key = `tab_${tabId}`;
@@ -93,12 +103,7 @@ async function saveServicesForTab(tabId, services) {
   if (hasServices) {
     await chrome.action.setIcon({
       tabId: tabId,
-      path: {
-        "16": "icon-active-16.png",
-        "32": "icon-active-32.png",
-        "48": "icon-active-48.png",
-        "128": "icon-active-128.png"
-      }
+      path: getIconPaths('active')
     });
   }
 }
@@ -155,12 +160,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
     // Reset icon to default state
     await chrome.action.setIcon({
       tabId: details.tabId,
-      path: {
-        "16": "icon-default-16.png",
-        "32": "icon-default-32.png",
-        "48": "icon-default-48.png",
-        "128": "icon-default-128.png"
-      }
+      path: getIconPaths('default')
     });
   }
 });

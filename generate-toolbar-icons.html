@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator - Optimized for Toolbar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .icon-preview {
+      display: inline-block;
+      margin: 10px;
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin: 5px;
+      background: white;
+    }
+    .dark-bg {
+      background: #333;
+    }
+    button {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #357ae8;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GIS Service Log - Toolbar Icons</h1>
+    <p>Optimized design that works on both light and dark backgrounds</p>
+    
+    <div class="section">
+      <h2>Default Icon (Inactive) - Light Background</h2>
+      <div id="default-icons-light"></div>
+    </div>
+    
+    <div class="section">
+      <h2>Default Icon (Inactive) - Dark Background</h2>
+      <div id="default-icons-dark"></div>
+    </div>
+    
+    <div class="section">
+      <h2>Active Icon - Light Background</h2>
+      <div id="active-icons-light"></div>
+    </div>
+    
+    <div class="section">
+      <h2>Active Icon - Dark Background</h2>
+      <div id="active-icons-dark"></div>
+    </div>
+    
+    <div class="section">
+      <button onclick="downloadAllIcons()">Download All Icons</button>
+    </div>
+  </div>
+
+  <script>
+    const sizes = [16, 32, 48, 128];
+
+    function drawDefaultIcon(canvas, size, darkBg = false) {
+      const ctx = canvas.getContext('2d');
+      const center = size / 2;
+      const padding = size * 0.1;
+      
+      ctx.clearRect(0, 0, size, size);
+      
+      // Use medium gray that works on both light and dark backgrounds
+      // Slightly darker than middle gray for better visibility
+      const colors = {
+        layer1: 'rgba(130, 130, 130, 0.7)',   // --text-muted from popup
+        layer2: 'rgba(130, 130, 130, 0.85)',
+        layer3: 'rgba(130, 130, 130, 1)',
+        highlight: 'rgba(255, 255, 255, 0.3)'
+      };
+      
+      // Main icon - map layers stack
+      const layerWidth = size * 0.8;
+      const layerHeight = size * 0.18;
+      const startY = padding + size * 0.05;
+      const spacing = size * 0.22;
+      
+      // Draw 3 stacked layers
+      const layerColors = [colors.layer1, colors.layer2, colors.layer3];
+      
+      for (let i = 0; i < 3; i++) {
+        const y = startY + (i * spacing);
+        
+        // Layer base
+        ctx.fillStyle = layerColors[i];
+        ctx.beginPath();
+        ctx.roundRect(center - layerWidth/2, y, layerWidth, layerHeight, size * 0.06);
+        ctx.fill();
+        
+        // Layer highlight
+        ctx.fillStyle = colors.highlight;
+        ctx.beginPath();
+        ctx.roundRect(center - layerWidth/2, y + 1, layerWidth, layerHeight * 0.35, size * 0.03);
+        ctx.fill();
+      }
+    }
+
+    function drawActiveIcon(canvas, size, darkBg = false) {
+      const ctx = canvas.getContext('2d');
+      const center = size / 2;
+      const padding = size * 0.1;
+      
+      ctx.clearRect(0, 0, size, size);
+      
+      // Use green that works on both backgrounds
+      // Lighter green (#789D4A) works better universally than dark green
+      const colors = {
+        layer1: 'rgba(120, 157, 74, 0.75)',   // --accent-primary (dark mode) works on both
+        layer2: 'rgba(120, 157, 74, 0.9)',
+        layer3: 'rgba(120, 157, 74, 1)',
+        highlight: 'rgba(255, 255, 255, 0.35)',
+        dotOuter: '#FFB81D',                   // --accent-secondary
+        dotInner: '#046A38'                    // Darker green for contrast
+      };
+      
+      // Main icon - map layers stack
+      const layerWidth = size * 0.8;
+      const layerHeight = size * 0.18;
+      const startY = padding + size * 0.05;
+      const spacing = size * 0.22;
+      
+      // Draw 3 stacked layers
+      const layerColors = [colors.layer1, colors.layer2, colors.layer3];
+      
+      for (let i = 0; i < 3; i++) {
+        const y = startY + (i * spacing);
+        
+        // Layer base
+        ctx.fillStyle = layerColors[i];
+        ctx.beginPath();
+        ctx.roundRect(center - layerWidth/2, y, layerWidth, layerHeight, size * 0.06);
+        ctx.fill();
+        
+        // Layer highlight
+        ctx.fillStyle = colors.highlight;
+        ctx.beginPath();
+        ctx.roundRect(center - layerWidth/2, y + 1, layerWidth, layerHeight * 0.35, size * 0.03);
+        ctx.fill();
+      }
+      
+      // Active indicator dot (top right corner)
+      const dotSize = size * 0.28;
+      const dotX = size - padding - dotSize * 0.6;
+      const dotY = padding + dotSize * 0.6;
+      
+      // Dot outer ring
+      ctx.fillStyle = colors.dotOuter;
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Dot inner
+      ctx.fillStyle = colors.dotInner;
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, dotSize * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function createCanvas(size, type, darkBg = false) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      canvas.className = darkBg ? 'dark-bg' : '';
+      
+      if (type === 'default') {
+        drawDefaultIcon(canvas, size, darkBg);
+      } else {
+        drawActiveIcon(canvas, size, darkBg);
+      }
+      
+      return canvas;
+    }
+
+    function downloadCanvas(canvas, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadAllIcons() {
+      sizes.forEach(size => {
+        const defaultCanvas = createCanvas(size, 'default');
+        downloadCanvas(defaultCanvas, `icon-default-${size}.png`);
+        
+        const activeCanvas = createCanvas(size, 'active');
+        downloadCanvas(activeCanvas, `icon-active-${size}.png`);
+      });
+    }
+
+    // Generate previews
+    window.onload = function() {
+      const defaultLightContainer = document.getElementById('default-icons-light');
+      const defaultDarkContainer = document.getElementById('default-icons-dark');
+      const activeLightContainer = document.getElementById('active-icons-light');
+      const activeDarkContainer = document.getElementById('active-icons-dark');
+      
+      sizes.forEach(size => {
+        // Default - Light
+        const defaultLightPreview = document.createElement('div');
+        defaultLightPreview.className = 'icon-preview';
+        const defaultLightCanvas = createCanvas(size, 'default', false);
+        defaultLightPreview.appendChild(defaultLightCanvas);
+        defaultLightPreview.innerHTML += `<br>${size}x${size}`;
+        defaultLightContainer.appendChild(defaultLightPreview);
+        
+        // Default - Dark
+        const defaultDarkPreview = document.createElement('div');
+        defaultDarkPreview.className = 'icon-preview';
+        const defaultDarkCanvas = createCanvas(size, 'default', true);
+        defaultDarkPreview.appendChild(defaultDarkCanvas);
+        defaultDarkPreview.innerHTML += `<br>${size}x${size}`;
+        defaultDarkContainer.appendChild(defaultDarkPreview);
+        
+        // Active - Light
+        const activeLightPreview = document.createElement('div');
+        activeLightPreview.className = 'icon-preview';
+        const activeLightCanvas = createCanvas(size, 'active', false);
+        activeLightPreview.appendChild(activeLightCanvas);
+        activeLightPreview.innerHTML += `<br>${size}x${size}`;
+        activeLightContainer.appendChild(activeLightPreview);
+        
+        // Active - Dark
+        const activeDarkPreview = document.createElement('div');
+        activeDarkPreview.className = 'icon-preview';
+        const activeDarkCanvas = createCanvas(size, 'active', true);
+        activeDarkPreview.appendChild(activeDarkCanvas);
+        activeDarkPreview.innerHTML += `<br>${size}x${size}`;
+        activeDarkContainer.appendChild(activeDarkPreview);
+      });
+    };
+  </script>
+</body>
+</html>
