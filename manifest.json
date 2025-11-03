@@ -2,7 +2,7 @@
   "manifest_version": 3,
 
   "name": "GIS Service Log",
-  "description": "Detects and logs GIS service requests: ArcGIS REST, WMS, WMTS, WFS, and XYZ tile services.",
+  "description": "Detects GIS web services (ArcGIS, WMS, WMTS, WFS, XYZ tiles) on any webpage. Essential tool for GIS developers and mapping pros.",
   "version": "0.8",
 
   "permissions": [
