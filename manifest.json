@@ -1,37 +1,43 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
 
   "name": "GIS Service Log",
-  "description": "This extension watches for network requests to GIS services (ArcGIS and WMS), and records unique URLs.",
-  "version": "0.2",
+  "description": "Detects and logs GIS service requests: ArcGIS REST, WMS, WMTS, WFS, and XYZ tile services.",
+  "version": "0.8",
 
   "permissions": [
     "webRequest",
+    "activeTab",
+    "storage",
+    "webNavigation"
+  ],
+
+  "host_permissions": [
     "*://*/*"
   ],
 
   "icons": {
-    "128": "esri-half-logo-128.jpg",
-    "48": "esri-half-logo-48.png"
+    "16": "icon-default-16.png",
+    "32": "icon-default-32.png",
+    "48": "icon-default-48.png",
+    "128": "icon-default-128.png"
   },
 
-  "page_action": {
+  "action": {
     "default_icon": {
-      "19": "esri-logo-19.png",
-      "38": "esri-logo-38.png"
+      "16": "icon-default-16.png",
+      "32": "icon-default-32.png",
+      "48": "icon-default-48.png",
+      "128": "icon-default-128.png"
     },
     "default_popup": "popup.html"
   },
 
-  "content_security_policy": "script-src 'self' https://ajax.googleapis.com https://cdnjs.cloudflare.com; object-src 'self'",
-
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
 
   "options_ui": {
-    "page": "options.html",
-    "chrome_style": true
-  },
-  "options_page": "options.html"
+    "page": "options.html"
+  }
 }

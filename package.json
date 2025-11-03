@@ -1,0 +1,24 @@
+{
+  "name": "gis-service-log",
+  "version": "0.6.0",
+  "description": "Chrome extension that detects and logs GIS web service requests",
+  "scripts": {
+    "package": "node scripts/package.js",
+    "clean": "node scripts/clean.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "gis",
+    "arcgis",
+    "wms",
+    "wmts",
+    "wfs",
+    "mapping"
+  ],
+  "author": "Bolton & Menk",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/bolton-and-menk/internal-apps/GIS-service-log-chrome-js"
+  }
+}

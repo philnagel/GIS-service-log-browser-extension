@@ -277,3 +277,130 @@ URLLog.prototype.pushIfUnique = function(entry) {
 URLLog.prototype.map = function(fn) {
   return this.entries.map(fn);
 }
+
+
+
+/**
+  XYZ/Slippy Tile Map log entry
+*/
+
+URLLogEntry.XYZ = function(rawURL) {
+  // Extract base URL by replacing tile coordinates with placeholders
+  // Matches patterns like /12/345/678.png or /{z}/{x}/{y}.png
+  this.rawURL = rawURL;
+  
+  // Remove query parameters for cleaner display
+  var urlWithoutQuery = rawURL.split('?')[0];
+  
+  // Replace numeric tile coordinates with placeholders
+  this.urlBase = urlWithoutQuery.replace(/\/\d+\/\d+\/\d+/, '/{z}/{x}/{y}');
+  
+  // Extract hostname for display
+  try {
+    var urlObj = new URL(rawURL);
+    this.hostname = urlObj.hostname;
+  } catch (e) {
+    this.hostname = rawURL.split('/')[2] || 'Unknown';
+  }
+}
+
+URLLogEntry.XYZ.prototype = new URLLogEntry();
+
+URLLogEntry.XYZ.create = function(rawURL) {
+  return new URLLogEntry.XYZ(rawURL);
+}
+
+URLLogEntry.XYZ.prototype.href = function() {
+  // Return the template URL for documentation purposes
+  return this.urlBase;
+}
+
+URLLogEntry.XYZ.prototype.label = function() {
+  return "XYZ Tile Service";
+}
+
+URLLogEntry.XYZ.prototype.linkText = function() {
+  return this.hostname;
+}
+
+URLLogEntry.XYZ.prototype.asyncFetchMeta = function($http) {
+  // XYZ tiles don't have metadata endpoints, just return self
+  return Promise.resolve(this);
+}
+
+
+
+/**
+  WMTS (Web Map Tile Service) log entry
+*/
+
+URLLogEntry.WMTS = function(rawURL) {
+  var params = parseURLParams(rawURL);
+  this.urlBase = /^(http[^\?]*)\?/i.exec(rawURL)[1];
+  this.layer = params.LAYER || params.layer;
+  this.tileMatrixSet = params.TILEMATRIXSET || params.TileMatrixSet;
+}
+
+URLLogEntry.WMTS.prototype = new URLLogEntry();
+
+URLLogEntry.WMTS.create = function(rawURL) {
+  return new URLLogEntry.WMTS(rawURL);
+}
+
+URLLogEntry.WMTS.prototype.href = function() {
+  // GetCapabilities produces an XML file describing the WMTS server's capabilities
+  return this.urlBase + "?service=WMTS&request=GetCapabilities";
+}
+
+URLLogEntry.WMTS.prototype.label = function() {
+  return "WMTS (Web Map Tile Service)";
+}
+
+URLLogEntry.WMTS.prototype.linkText = function() {
+  if (this.layer && this.tileMatrixSet) {
+    return this.layer + " (" + this.tileMatrixSet + ")";
+  }
+  return this.layer || this.tileMatrixSet || "WMTS Service";
+}
+
+URLLogEntry.WMTS.prototype.asyncFetchMeta = function($http) {
+  // WMTS metadata would require parsing XML capabilities document
+  return Promise.resolve(this);
+}
+
+
+
+/**
+  WFS (Web Feature Service) log entry
+*/
+
+URLLogEntry.WFS = function(rawURL) {
+  var params = parseURLParams(rawURL);
+  this.urlBase = /^(http[^\?]*)\?/i.exec(rawURL)[1];
+  this.typeName = params.TYPENAME || params.TypeName || params.typeName;
+  this.version = params.VERSION || params.version || "Unknown";
+}
+
+URLLogEntry.WFS.prototype = new URLLogEntry();
+
+URLLogEntry.WFS.create = function(rawURL) {
+  return new URLLogEntry.WFS(rawURL);
+}
+
+URLLogEntry.WFS.prototype.href = function() {
+  // GetCapabilities produces an XML file describing the WFS server's capabilities
+  return this.urlBase + "?service=WFS&request=GetCapabilities";
+}
+
+URLLogEntry.WFS.prototype.label = function() {
+  return "WFS (Web Feature Service)";
+}
+
+URLLogEntry.WFS.prototype.linkText = function() {
+  return this.typeName || "WFS Service";
+}
+
+URLLogEntry.WFS.prototype.asyncFetchMeta = function($http) {
+  // WFS metadata would require parsing XML capabilities document
+  return Promise.resolve(this);
+}

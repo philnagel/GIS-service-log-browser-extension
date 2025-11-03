@@ -16,47 +16,141 @@
 */
 
 /**
-  Angular application and controller for popup window
+  Popup window logic - vanilla JavaScript
 */
 
-var app = angular.module('GISServiceLog', []);
-
-app.controller('GISServiceLogCtrl', [
-  '$scope',
-  '$http',
-  '$q',
-  function($scope, $http, $q) {
-
-    $q(function(resolve, reject) {
-      chrome.tabs.query({active:true, currentWindow:true}, function(tabs) {
-        var servicesByTab = chrome.extension.getBackgroundPage().servicesByTab;
-        resolve(servicesByTab[tabs[0].id]);
-      });
-    }).then(function(rawLog) {
-      // TODO(bkietz) $scope.urlLog should probably be populated
-      //   only once then cached, with a refresh button.
-      //   (Better yet, send a message from background when new urls are available for this tab.)
-      //   Currently it is generated every time the popup is opened
-
-      if (rawLog == null) return;
-      console.log(rawLog);
-
-      $scope.urlLog = new URLLog();
-
-      for (var url in rawLog) {
-        var type = rawLog[url];
-        var entry = URLLogEntry.create(type, url);
-        if (entry == null) continue;
-        $scope.urlLog.pushIfUnique(entry);
+// Get services from background service worker
+async function getServicesForCurrentTab() {
+  const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+  const tabId = tabs[0].id;
+  
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      {action: 'getServices', tabId: tabId},
+      function(response) {
+        resolve(response || {});
       }
+    );
+  });
+}
 
-      var promises = $scope.urlLog.map(function(e) {
-        return e.asyncFetchMeta($http);
-      });
-
-      console.log($scope.urlLog);
-
-      return $q.all(promises);
-    });
+// Copy URL to clipboard
+async function copyToClipboard(text, button) {
+  try {
+    await navigator.clipboard.writeText(text);
+    
+    // Visual feedback
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(() => {
+      button.textContent = originalText;
+      button.classList.remove('copied');
+    }, 2000);
+  } catch (err) {
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    setTimeout(() => {
+      button.textContent = 'Copy';
+      button.classList.remove('copied');
+    }, 2000);
   }
-]);
+}
+
+// Render a single service entry
+function renderServiceEntry(entry) {
+  const li = document.createElement('li');
+  li.className = 'service-item';
+  
+  // Content container
+  const content = document.createElement('div');
+  content.className = 'service-content';
+  
+  const label = document.createElement('span');
+  label.className = 'service-label';
+  label.textContent = entry.label() + ':';
+  
+  const link = document.createElement('a');
+  link.className = 'service-link';
+  link.href = entry.href();
+  link.textContent = entry.linkText();
+  link.target = '_blank';
+  link.title = entry.href(); // Tooltip showing full URL
+  
+  content.appendChild(label);
+  content.appendChild(link);
+  
+  // Copy button
+  const copyButton = document.createElement('button');
+  copyButton.className = 'copy-button';
+  copyButton.textContent = 'Copy';
+  copyButton.title = 'Copy URL to clipboard';
+  copyButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    copyToClipboard(entry.href(), copyButton);
+  });
+  
+  li.appendChild(content);
+  li.appendChild(copyButton);
+  
+  return li;
+}
+
+// Main initialization
+async function init() {
+  const rawLog = await getServicesForCurrentTab();
+  
+  if (!rawLog || Object.keys(rawLog).length === 0) {
+    document.getElementById('services-list').innerHTML = 
+      '<li class="no-services">No GIS services detected on this page</li>';
+    return;
+  }
+  
+  const urlLog = new URLLog();
+  
+  // Parse all URLs and create log entries
+  for (const url in rawLog) {
+    const type = rawLog[url];
+    const entry = URLLogEntry.create(type, url);
+    if (entry == null) continue;
+    urlLog.pushIfUnique(entry);
+  }
+  
+  // Fetch metadata for all entries
+  const promises = urlLog.map(async (entry) => {
+    try {
+      const response = await fetch(entry.href() + (entry.href().includes('?') ? '&' : '?') + 'f=json');
+      const data = await response.json();
+      if (entry.layerName == null && data.name) {
+        entry.layerName = data.name;
+      }
+    } catch (e) {
+      // Silently fail if metadata fetch fails
+    }
+    return entry;
+  });
+  
+  await Promise.all(promises);
+  
+  // Render all entries
+  const listElement = document.getElementById('services-list');
+  listElement.innerHTML = '';
+  
+  urlLog.entries.forEach(entry => {
+    listElement.appendChild(renderServiceEntry(entry));
+  });
+}
+
+// Run when popup opens
+document.addEventListener('DOMContentLoaded', init);

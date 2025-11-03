@@ -15,12 +15,13 @@
   limitations under the License.​
 */
 
-var app = angular.module('GISServiceLogOptions', []);
+/**
+  Options page logic - vanilla JavaScript
+*/
 
-app.controller('GISServiceLogOptionsCtrl', [
-  '$scope',
-  '$http',
-  '$q',
-  function($scope, $http, $q) {
-  }
-]);
+// Initialize options page
+function init() {
+  // No options to configure yet
+}
+
+document.addEventListener('DOMContentLoaded', init);
