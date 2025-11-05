@@ -121,6 +121,21 @@ URLLogEntry.ArcGIS = function(rawURL) {
   this.serviceType = urlParts[2];
   var urlRest      = urlParts[3];
 
+  // Extract hostname
+  try {
+    var urlObj = new URL(rawURL);
+    this.hostname = urlObj.hostname;
+  } catch (e) {
+    this.hostname = rawURL.split('/')[2] || 'Unknown';
+  }
+
+  // Extract service name from the URL path
+  // Example: /rest/services/FolderName/ServiceName/MapServer -> FolderName/ServiceName
+  var servicePathMatch = /\/rest\/services\/(.+)\/\w*Server/i.exec(rawURL);
+  if (servicePathMatch) {
+    this.serviceName = servicePathMatch[1];
+  }
+
   // augment with layer information, if applicable
   switch (this.serviceType) {
     case "FeatureServer":
@@ -184,7 +199,20 @@ URLLogEntry.ArcGIS.prototype.label = function() {
 }
 
 URLLogEntry.ArcGIS.prototype.linkText = function() {
-  return this.layerName || this.layerId || this.serviceType;
+  // Build display text: serviceName (hostname)
+  var displayText = this.serviceName || this.serviceType;
+  
+  // Add layer info if present
+  if (this.layerId && this.layerId !== this.serviceName) {
+    displayText += " (Layer " + this.layerId + ")";
+  }
+  
+  // Add hostname
+  if (this.hostname) {
+    displayText += " - " + this.hostname;
+  }
+  
+  return displayText;
 }
 
 URLLogEntry.ArcGIS.prototype.asyncFetchMeta = function($http) {
@@ -211,6 +239,14 @@ URLLogEntry.WMS = function(rawURL) {
   var params = parseURLParams(rawURL);
   this.urlBase = /^(http[^\?]*)\?/i.exec(rawURL)[1];
   this.layers = params.LAYERS;
+  
+  // Extract hostname for display
+  try {
+    var urlObj = new URL(rawURL);
+    this.hostname = urlObj.hostname;
+  } catch (e) {
+    this.hostname = rawURL.split('/')[2] || 'Unknown';
+  }
 }
 
 URLLogEntry.WMS.prototype = new URLLogEntry();
@@ -230,7 +266,11 @@ URLLogEntry.WMS.prototype.label = function() {
 }
 
 URLLogEntry.WMS.prototype.linkText = function() {
-  return this.layers;
+  var displayText = this.layers || "WMS Service";
+  if (this.hostname) {
+    displayText += " - " + this.hostname;
+  }
+  return displayText;
 }
 
 URLLogEntry.WMS.prototype.asyncFetchMeta = function($http) {
@@ -339,6 +379,14 @@ URLLogEntry.WMTS = function(rawURL) {
   this.urlBase = /^(http[^\?]*)\?/i.exec(rawURL)[1];
   this.layer = params.LAYER || params.layer;
   this.tileMatrixSet = params.TILEMATRIXSET || params.TileMatrixSet;
+  
+  // Extract hostname for display
+  try {
+    var urlObj = new URL(rawURL);
+    this.hostname = urlObj.hostname;
+  } catch (e) {
+    this.hostname = rawURL.split('/')[2] || 'Unknown';
+  }
 }
 
 URLLogEntry.WMTS.prototype = new URLLogEntry();
@@ -357,10 +405,18 @@ URLLogEntry.WMTS.prototype.label = function() {
 }
 
 URLLogEntry.WMTS.prototype.linkText = function() {
+  var displayText;
   if (this.layer && this.tileMatrixSet) {
-    return this.layer + " (" + this.tileMatrixSet + ")";
+    displayText = this.layer + " (" + this.tileMatrixSet + ")";
+  } else {
+    displayText = this.layer || this.tileMatrixSet || "WMTS Service";
   }
-  return this.layer || this.tileMatrixSet || "WMTS Service";
+  
+  if (this.hostname) {
+    displayText += " - " + this.hostname;
+  }
+  
+  return displayText;
 }
 
 URLLogEntry.WMTS.prototype.asyncFetchMeta = function($http) {
@@ -379,6 +435,14 @@ URLLogEntry.WFS = function(rawURL) {
   this.urlBase = /^(http[^\?]*)\?/i.exec(rawURL)[1];
   this.typeName = params.TYPENAME || params.TypeName || params.typeName;
   this.version = params.VERSION || params.version || "Unknown";
+  
+  // Extract hostname for display
+  try {
+    var urlObj = new URL(rawURL);
+    this.hostname = urlObj.hostname;
+  } catch (e) {
+    this.hostname = rawURL.split('/')[2] || 'Unknown';
+  }
 }
 
 URLLogEntry.WFS.prototype = new URLLogEntry();
@@ -397,7 +461,11 @@ URLLogEntry.WFS.prototype.label = function() {
 }
 
 URLLogEntry.WFS.prototype.linkText = function() {
-  return this.typeName || "WFS Service";
+  var displayText = this.typeName || "WFS Service";
+  if (this.hostname) {
+    displayText += " - " + this.hostname;
+  }
+  return displayText;
 }
 
 URLLogEntry.WFS.prototype.asyncFetchMeta = function($http) {
