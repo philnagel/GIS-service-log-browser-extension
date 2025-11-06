@@ -1,0 +1,5 @@
+1. Install the extension and navigate to any website that uses web mapping services (e.g., https://openlayers.org/en/latest/examples/wms-custom-proj.html)
+2. Click the extension icon in the toolbar - it should change from gray to blue/green when services are detected
+3. The popup will display a list of detected GIS service URLs organized by type (ArcGIS, WMS, WMTS, WFS, XYZ)
+4. Click any URL to open it in a new tab
+5. Navigate to a different page - the icon should reset and show new services
