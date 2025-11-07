@@ -3,7 +3,7 @@
 
   "name": "GIS Service Log",
   "description": "Detects GIS web services (ArcGIS, WMS, WMTS, WFS, XYZ tiles) on any webpage. Essential tool for GIS developers and mapping pros.",
-  "version": "0.9",
+  "version": "0.9.1",
 
   "permissions": [
     "webRequest",
@@ -34,6 +34,9 @@
   },
 
   "background": {
+    "scripts": [
+    "background.js"
+  ],
     "service_worker": "background.js"
   },
 
